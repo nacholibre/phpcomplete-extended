@@ -1424,10 +1424,10 @@ function! phpcomplete_extended#loadCoreIndex() "{{{
 endfunction "}}}
 
 function! phpcomplete_extended#generateIndex(...) "{{{
-    if !s:valid_composer_command()
-        echoerr printf('The composer command "%s" is not a valid Composer command. Please set g:phpcomplete_index_composer_command in your .vimrc file', g:phpcomplete_index_composer_command)
-        return
-    endif
+    " if !s:valid_composer_command()
+    "     echoerr printf('The composer command "%s" is not a valid Composer command. Please set g:phpcomplete_index_composer_command in your .vimrc file', g:phpcomplete_index_composer_command)
+    "     return
+    " endif
 
     call s:makeCacheDir()
     call s:copyCoreIndex()
