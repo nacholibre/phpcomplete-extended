@@ -30,6 +30,14 @@
 set_time_limit(0);
 ini_set('memory_limit','1000M');
 ini_set('display_errors', 'stderr');
+
+//register_shutdown_function( "fatalErrorHandler" );
+//function fatalErrorHandler() {
+//    echo 'fatal error handler';
+//    $error = error_get_last();
+//    var_dump($error);
+//}
+
 if(php_sapi_name() == 'cli') {
     if(count($argv) < 2) {
         echo "error: not enough arguments";
@@ -409,7 +417,7 @@ class IndexGenerator
         return $path;
     }
 
-    public function generateIndex() 
+    public function generateIndex()
     {
         $this->processCoreIndexFile();
         $time = microtime(true); // Gets microseconds
@@ -420,7 +428,28 @@ class IndexGenerator
             $drive = strtolower(substr($cwd, 0, 2));
             $cwd = substr_replace($cwd, $drive, 0, 2);
         }
-        array_walk($classMap, function(&$item, $key) use ($cwd){
+
+        $excludeNamespacesFile = $cwd . '.phpcomplete_extended/excluded_namespaces.php';
+
+        $excludeNamespaces = [];
+        if(file_exists($excludeNamespacesFile)) {
+            $excludeNamespaces = include $excludeNamespacesFile;
+        }
+
+        $classMap = array_filter($classMap, function($value, $key) use($excludeNamespaces) {
+            $currentNamespace = $key;
+            $excludedFromAutocomplete = false;
+            foreach($excludeNamespaces as $excluded) {
+                if (strpos($currentNamespace, $excluded) !== false) {
+                    $excludedFromAutocomplete = true;
+                    break;
+                }
+            }
+
+            return $excludedFromAutocomplete == false;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        array_walk($classMap, function(&$item, $key) use ($cwd) {
             $item = str_replace("\\", '/', $item);
             if(strpos($item, ':') == 1) {
                 $drive = strtolower(substr($item, 0, 2));
@@ -428,6 +457,7 @@ class IndexGenerator
             }
             $item = str_replace($cwd, '', $item);
         });
+
         $out = array();
         $out['namespaces'] = array();
         $out['interface'] = array();
@@ -774,13 +804,14 @@ class IndexGenerator
         if(empty($fqcn)) {
             return $classData;
         }
+
         try {
             $reflectionClass = new \ReflectionClass($fqcn);
         } catch (\Exception $e) {
             return $classData;
         }
 
-        if($reflectionClass->isInternal()) { 
+        if($reflectionClass->isInternal()) {
             $fqcn = $reflectionClass->getName();
             if(array_key_exists($fqcn, $this->coreIndex['classes'])) {
                 return $this->coreIndex['classes'][$reflectionClass->getName()];

@@ -53,6 +53,10 @@ if !exists("s:phpcomplete_enabled")
     let s:phpcomplete_enabled = 1
 endif
 
+if !exists('g:phpcomplete_php_binary')
+	let g:phpcomplete_php_binary = 'php'
+endif
+
 let s:disabled_projects = []
 
 let s:T = {
@@ -1437,7 +1441,7 @@ function! phpcomplete_extended#generateIndex(...) "{{{
 
     let plugin_php_file_command = join(map(copy(s:plugin_php_files), '" -u ".v:val'))
 
-    let cmd = 'php ' . input . plugin_php_file_command
+    let cmd = g:phpcomplete_php_binary . ' ' . input . plugin_php_file_command
     "echoerr cmd
     "return
 
